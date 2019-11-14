@@ -38,10 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'assets',
-    'finance',
-    'main',
-    'material'
+    'assets.apps.AssetsConfig',
+    'finance.apps.FinanceConfig',
+    'main.apps.MainConfig',
+    'material.apps.MaterialConfig'
 ]
 
 MIDDLEWARE = [

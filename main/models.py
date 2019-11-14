@@ -2,47 +2,41 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 
-# Create your models here.
-
-
 class User(AbstractUser):
-    PRODUCT_MANAGER = 0
-    PROJECT_MANAGER = 1
-    ENGINEER = 2
-    USER_POSITION = (
-        (PRODUCT_MANAGER, 'product_manager'),
-        (PROJECT_MANAGER, 'project_manager'),
-        (ENGINEER, 'engineer')
+    ILL = 0
+    VACATION = 1
+    AT_WORK = 2
+    DAY_OFF = 3
+    REMOTE = 4
+    USER_STATUS = (
+        (ILL, 'Больничный'),
+        (VACATION, 'Отпуск'),
+        (AT_WORK, 'На рабочем месте'),
+        (DAY_OFF, 'Выходной'),
+        (REMOTE, 'Удаленно')
     )
-    position = models.PositiveSmallIntegerField(choices=USER_POSITION, null=True, blank=True)
-    phone = models.CharField(max_length=64, blank=True, null=True)
+    user_status = models.SmallIntegerField(choices=USER_STATUS, null=True, blank=True)
+    role = models.ForeignKey('Role', on_delete=models.CASCADE, null=True, blank=True)
+    phone = models.CharField(max_length=15, blank=True, null=True)
+    manager = models.ForeignKey('User', on_delete=models.CASCADE, null=True, blank=True)
 
-
-class BaseAsset(models.Model):
     class Meta:
-        abstract = True
+        verbose_name = 'Сотрудник'
+        verbose_name_plural = 'Сотрудники'
 
-    active = models.BooleanField(default=True)
+    def __repr__(self):
+        return self.get_full_name()
+
+    def __str__(self):
+        return self.__repr__()
+
+
+class Role(models.Model):
     name = models.CharField(max_length=512)
-    created_by = models.ForeignKey('User', on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    last_update = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        verbose_name = 'Должность'
+        verbose_name_plural = 'Должности'
 
-class MaterialAsset(BaseAsset):
-    count = models.PositiveIntegerField(default=1)
-
-class MaterialAssetOrder(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-
-
-class FinancialAsset(BaseAsset):
-    pass
-
-
-class ImmaterialAsset(BaseAsset):
-    pass
-
-
-class MartialAssetSupport(models.Model):
-    pass
+    def __str__(self):
+        return self.name

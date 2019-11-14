@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import *
 
-# Register your models here.
+admin.site.register(Cash, admin.ModelAdmin)
+admin.site.register(CreditTicket, admin.ModelAdmin)
+admin.site.register(ChargeTicket, admin.ModelAdmin)

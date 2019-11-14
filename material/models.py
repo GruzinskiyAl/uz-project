@@ -1,3 +1,4 @@
+import uuid
 from django.core.exceptions import ValidationError
 from django.db import models
 from picklefield.fields import PickledObjectField
@@ -15,6 +16,7 @@ class MaterialCategory(models.Model):
 
 
 class Material(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     category = models.ForeignKey('MaterialCategory', on_delete=models.CASCADE)
     name = models.CharField(max_length=512)
     price = models.FloatField(default=0.0)
@@ -61,6 +63,6 @@ class UsageOrder(models.Model):
         return f'{self.date}_{self.material}'
 
     def clean(self):
-        if self.material.count > self.count_out:
+        if self.material.count < self.count_out:
             raise ValidationError
         super().clean()
