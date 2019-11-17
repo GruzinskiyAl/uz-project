@@ -38,6 +38,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'django_json_widget',
+    'rangefilter',
+
     'assets.apps.AssetsConfig',
     'finance.apps.FinanceConfig',
     'main.apps.MainConfig',

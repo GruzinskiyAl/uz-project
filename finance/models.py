@@ -1,9 +1,15 @@
 from django.db import models
 
 
+def get_cash_amount():
+    income = CreditTicket.objects.aggregate(models.Sum('amount')).get('amount__sum', 0)
+    outcome = ChargeTicket.objects.aggregate(models.Sum('amount')).get('amount__sum', 0)
+    return income - outcome
+
+
 class Cash(models.Model):
-    amount = models.FloatField(default=0.0)
-    date = models.DateTimeField(auto_now_add=True, unique_for_date=True)
+    amount = models.FloatField(default=get_cash_amount, editable=False)
+    date = models.DateField(auto_now_add=True, unique=True)
 
     class Meta:
         verbose_name = 'Средства'
