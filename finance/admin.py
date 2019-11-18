@@ -1,12 +1,15 @@
+from datetime import date
+
 from django.contrib import admin
-from .models import *
+from finance.models import Cash, Ticket
 
 
 @admin.register(Cash)
 class CashAdmin(admin.ModelAdmin):
-    def add_view(self, request, form_url='', extra_context=None):
-        pass
+    def has_add_permission(self, request, obj=None):
+        if Cash.objects.filter(date=date.today()).exists():
+            return False
+        return super().has_add_permission(request)
 
 
-admin.site.register(CreditTicket, admin.ModelAdmin)
-admin.site.register(ChargeTicket, admin.ModelAdmin)
+admin.site.register(Ticket, admin.ModelAdmin)

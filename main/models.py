@@ -30,6 +30,10 @@ class User(AbstractUser):
     def __str__(self):
         return self.__repr__()
 
+    @property
+    def full_name(self):
+        return self.get_full_name()
+
 
 class Role(models.Model):
     name = models.CharField(max_length=512)

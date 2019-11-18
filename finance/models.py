@@ -2,8 +2,8 @@ from django.db import models
 
 
 def get_cash_amount():
-    income = CreditTicket.objects.aggregate(models.Sum('amount')).get('amount__sum', 0)
-    outcome = ChargeTicket.objects.aggregate(models.Sum('amount')).get('amount__sum', 0)
+    income = Ticket.objects.filter(ticket_type=Ticket.INCOME).aggregate(models.Sum('amount')).get('amount__sum', 0)
+    outcome = Ticket.objects.filter(ticket_type=Ticket.OUTCOME).aggregate(models.Sum('amount')).get('amount__sum', 0)
     return income - outcome
 
 
@@ -20,27 +20,25 @@ class Cash(models.Model):
         return f'{self.date}_{self.amount}'
 
 
-class BaseTicket(models.Model):
+class Ticket(models.Model):
+    INCOME = 0
+    OUTCOME = 1
+    TICKET_TYPES = (
+        (INCOME, 'income'),
+        (OUTCOME, 'outcome'),
+    )
+    ticket_type = models.SmallIntegerField(choices=TICKET_TYPES, default=0)
     amount = models.FloatField(default=0.0)
     date = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey('main.User', on_delete=models.CASCADE)
 
     class Meta:
-        abstract = True
+        verbose_name = 'Кассовый ордер'
+        verbose_name_plural = 'Кассовые ордера'
 
     def __str__(self):
-        return f'{self.date}_{self.amount}'
-
-
-class CreditTicket(BaseTicket):  # ПКО
-    class Meta:
-        abstract = False
-        verbose_name = 'Приходный кассовый чек'
-        verbose_name_plural = 'Приходные кассовые чеки'
-
-
-class ChargeTicket(BaseTicket):  # PKO
-    class Meta:
-        abstract = False
-        verbose_name = 'Расходнй кассовый чек'
-        verbose_name_plural = 'Расходные кассовые чеки'
+        if self.ticket_type == self.INCOME:
+            prefix = '+'
+        else:
+            prefix = '-'
+        return f'{prefix}{round(self.amount, 2)} дата - {self.date.strftime("%d.%m.%Y %H:%M")}'

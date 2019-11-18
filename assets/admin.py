@@ -5,7 +5,7 @@ from assets.forms import AssetForm
 from assets.models import AssetItem, Asset, AssetType, SupportReport, SupportTicket, SupportTicketItem
 
 from django_json_widget.widgets import JSONEditorWidget
-from rangefilter.filter import DateRangeFilter, DateTimeRangeFilter
+from rangefilter.filter import DateRangeFilter
 
 admin.site.register(AssetType, admin.ModelAdmin)
 

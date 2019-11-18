@@ -1,7 +1,7 @@
 import uuid
 from django.core.exceptions import ValidationError
 from django.db import models
-from picklefield.fields import PickledObjectField
+from django.contrib.postgres.fields import JSONField
 
 
 class MaterialCategory(models.Model):
@@ -20,7 +20,7 @@ class Material(models.Model):
     category = models.ForeignKey('MaterialCategory', on_delete=models.CASCADE)
     name = models.CharField(max_length=512)
     price = models.FloatField(default=0.0)
-    info = PickledObjectField()
+    info = JSONField(null=True, blank=True)
 
     class Meta:
         verbose_name = 'Материал'
@@ -31,8 +31,12 @@ class Material(models.Model):
 
     @property
     def count(self):
-        return SupplyOrder.objects.aggregate(models.Sum('count_in')) - UsageOrder.objects.aggregate(
-            models.Sum('count_out'))
+        return (SupplyOrder.objects.aggregate(models.Sum('count_in')).get('count_in__sum') or 0) - \
+               (UsageOrder.objects.aggregate(models.Sum('count_out')).get('count_out__sum') or 0)
+
+    @property
+    def sum_price(self):
+        return round((self.count * self.price), 2)
 
 
 class SupplyOrder(models.Model):
