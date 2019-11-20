@@ -38,9 +38,15 @@ class Material(models.Model):
     def sum_price(self):
         return round((self.count * self.price), 2)
 
+    @property
+    def last_supply_date(self):
+        if self.supply_orders.last():
+            return self.supply_orders.last().date.strftime("%d.%m.%y")
+        return ""
+
 
 class SupplyOrder(models.Model):
-    material = models.ForeignKey('Material', on_delete=models.CASCADE)
+    material = models.ForeignKey('Material', on_delete=models.CASCADE, related_name='supply_orders')
     count_in = models.FloatField(default=0.0)
     date = models.DateTimeField(auto_now_add=True)
     responsive_user = models.ForeignKey('main.User', on_delete=models.CASCADE)
@@ -50,14 +56,13 @@ class SupplyOrder(models.Model):
         verbose_name_plural = 'Закупки'
 
     def __str__(self):
-        return f'{self.date}_{self.material}'
+        return self.material
 
 
 class UsageOrder(models.Model):
     material = models.ForeignKey('Material', on_delete=models.CASCADE)
     count_out = models.FloatField(default=0.0)
     date = models.DateTimeField(auto_now_add=True)
-    responsive_user = models.ForeignKey('main.User', on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = 'Выдача'

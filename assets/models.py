@@ -6,6 +6,7 @@ from datetime import date, timedelta
 from django.contrib.postgres.fields import JSONField
 
 from main.models import User
+from finance.models import Ticket
 
 
 class AssetType(models.Model):
@@ -35,17 +36,31 @@ class Asset(models.Model):
 class AssetItem(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     asset = models.ForeignKey('Asset', on_delete=models.CASCADE)
-    name = models.CharField(max_length=512)
     date_acquire = models.DateField(auto_now_add=True)
-    sum_acquire = models.FloatField(default=0.0)
     years_to_use = models.FloatField(default=1.0)
+    supply_order = models.ForeignKey('AssetItemSupplyOrder', on_delete=models.CASCADE, related_name='asset_item')
 
     class Meta:
         verbose_name = 'Еденица актива'
         verbose_name_plural = 'Еденицы активов'
 
     def __str__(self):
-        return f'{self.pk}_{self.name}'
+        return f'{self.uuid}_{self.asset.name}'
+
+    @property
+    def data(self):
+        return {
+            'asset': self.asset,
+            'years_to_use': self.years_to_use,
+            'supply_order': self.supply_order
+        }
+
+    @cached_property
+    def sum_acquire(self):
+        res = 0.0
+        if self.supply_order.ticket:
+            res = round(self.supply_order.ticket.amount / self.supply_order.count_in, 2)
+        return res
 
     @cached_property
     def date_expire(self):
@@ -60,7 +75,7 @@ class AssetItem(models.Model):
         if delta_days > 0:
             value = self.sum_acquire / ((self.years_to_use * 365) / delta_days)
         else:
-            value = self.sum_acquire
+            value = 0
         return round(value, 2)
 
     @property
@@ -75,8 +90,23 @@ class AssetItem(models.Model):
     def last_support(self):
         support_ticket = self.support_tickets.all().order_by('time_planned').last()
         if support_ticket:
-            return support_ticket.time_planned
+            return support_ticket.time_planned.strftime("%d.%m.%y")
         return ''
+
+
+class AssetItemSupplyOrder(models.Model):
+    ticket = models.ForeignKey('finance.Ticket', on_delete=models.CASCADE,
+                               related_name='asset_item_supply_orders',
+                               limit_choices_to={'ticket_type': Ticket.OUTCOME})
+    count_in = models.PositiveIntegerField(default=1)
+    date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Заказ активов'
+        verbose_name_plural = 'Заказы активов'
+
+    def __str__(self):
+        return f'Дата: {self.date}_{self.asset_item}'
 
 
 class SupportTicket(models.Model):
