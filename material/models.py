@@ -73,5 +73,5 @@ class UsageOrder(models.Model):
 
     def clean(self):
         if self.material.count < self.count_out:
-            raise ValidationError
+            raise ValidationError(f'Нельзя списать {self.count_out} из {self.material.count}')
         super().clean()
