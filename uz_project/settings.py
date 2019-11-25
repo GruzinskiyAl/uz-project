@@ -85,7 +85,7 @@ WSGI_APPLICATION = 'uz_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'uz_db',
+        'NAME': 'uz_db_1',
         'USER': 'admin',
         'PASSWORD': 'qwerty12345',
         'HOST': 'localhost',
