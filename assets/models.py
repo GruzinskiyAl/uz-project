@@ -6,11 +6,10 @@ from datetime import date, timedelta
 from django.contrib.postgres.fields import JSONField
 
 from main.models import User
-from finance.models import Ticket
 
 
 class AssetType(models.Model):
-    name = models.CharField(max_length=1024)
+    name = models.CharField(max_length=1024, verbose_name="Название")
 
     class Meta:
         verbose_name = 'Тип актива'
@@ -21,9 +20,10 @@ class AssetType(models.Model):
 
 
 class Asset(models.Model):
-    asset_type = models.ForeignKey('AssetType', on_delete=models.CASCADE)
-    name = models.CharField(max_length=512)
-    info = JSONField(null=True, blank=True)
+    asset_type = models.ForeignKey('AssetType', on_delete=models.CASCADE, verbose_name="Тип актива")
+    name = models.CharField(max_length=512, verbose_name="Наименование")
+    years_to_use = models.FloatField(default=1.0, verbose_name="Время эксплуатации (лет)")
+    info = JSONField(null=True, blank=True, verbose_name="Дополнительная информация")
 
     class Meta:
         verbose_name = 'Актив'
@@ -32,48 +32,40 @@ class Asset(models.Model):
     def __str__(self):
         return f'{self.pk}_{self.name}'
 
+    @property
+    def supply_orders_count(self):
+        return self.asset_supply_orders.count()
+
 
 class AssetItem(models.Model):
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
-    asset = models.ForeignKey('Asset', on_delete=models.CASCADE)
-    date_acquire = models.DateField(auto_now_add=True)
-    years_to_use = models.FloatField(default=1.0)
-    supply_order = models.ForeignKey('AssetItemSupplyOrder', on_delete=models.CASCADE, related_name='asset_item')
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, verbose_name="Код")
+    date_acquire = models.DateField(auto_now_add=True, verbose_name="Дата поступления")
+    sum_acquire = models.FloatField(default=0.0, verbose_name="Закупочная себестоимость")
+    asset = models.ForeignKey('Asset', on_delete=models.CASCADE, verbose_name="Актив", related_name='asset_items')
 
     class Meta:
         verbose_name = 'Еденица актива'
         verbose_name_plural = 'Еденицы активов'
 
     def __str__(self):
-        return f'{self.uuid}_{self.asset.name}'
-
-    @property
-    def data(self):
-        return {
-            'asset': self.asset,
-            'years_to_use': self.years_to_use,
-            'supply_order': self.supply_order
-        }
-
-    @cached_property
-    def sum_acquire(self):
-        res = 0.0
-        if self.supply_order.ticket:
-            res = round(self.supply_order.ticket.amount / self.supply_order.count_in, 2)
-        return res
+        return f'{str(self.uuid)[:6]}_{self.asset.name}'
 
     @cached_property
     def date_expire(self):
-        days_to_use = self.years_to_use * 365
+        days_to_use = self.asset.years_to_use * 365
         delta = timedelta(days=days_to_use)
         return self.date_acquire + delta
+
+    @cached_property
+    def years_to_use(self):
+        return self.asset.years_to_use
 
     @property
     def amortization_used(self):  # hom much 'money' item already has used
         today = date.today()
         delta_days = (today - self.date_acquire).days
         if delta_days > 0:
-            value = self.sum_acquire / ((self.years_to_use * 365) / delta_days)
+            value = self.sum_acquire / ((self.asset.years_to_use * 365) / delta_days)
         else:
             value = 0
         return round(value, 2)
@@ -95,26 +87,28 @@ class AssetItem(models.Model):
 
 
 class AssetItemSupplyOrder(models.Model):
-    ticket = models.ForeignKey('finance.Ticket', on_delete=models.CASCADE,
-                               related_name='asset_item_supply_orders',
-                               limit_choices_to={'ticket_type': Ticket.OUTCOME})
-    count_in = models.PositiveIntegerField(default=1)
-    date = models.DateTimeField(auto_now_add=True)
+    asset = models.ForeignKey('Asset', on_delete=models.CASCADE, related_name='asset_supply_orders',
+                              verbose_name="Актив")
+    count_in = models.PositiveIntegerField(default=1, verbose_name="Количество")
+    total_price = models.FloatField(default=0.0, verbose_name='Общая стоимость')
+    date = models.DateTimeField(auto_now_add=True, verbose_name="Время заказа")
 
     class Meta:
         verbose_name = 'Заказ активов'
         verbose_name_plural = 'Заказы активов'
 
     def __str__(self):
-        return f'Дата: {self.date}_{self.asset_item}'
+        return f'Дата: {self.date}, актив: {self.asset}'
 
 
 class SupportTicket(models.Model):
-    asset_item = models.ForeignKey('AssetItem', on_delete=models.CASCADE, related_name='support_tickets')
-    time_created = models.DateTimeField(auto_now_add=True)
-    respondent = models.ManyToManyField('main.User')
-    time_planned = models.DateTimeField()
-    description = models.TextField()
+    asset_item = models.ForeignKey('AssetItem', on_delete=models.CASCADE, related_name='support_tickets',
+                                   verbose_name='Еденица актива')
+    time_created = models.DateTimeField(auto_now_add=True, verbose_name="Время создания")
+    respondent = models.ForeignKey('main.Departament', verbose_name="Ответственный департамент",
+                                   on_delete=models.CASCADE)
+    time_planned = models.DateTimeField(verbose_name="Запланированное время")
+    description = models.TextField(verbose_name="Описание")
 
     class Meta:
         verbose_name = 'Ремонтные работы'
@@ -130,8 +124,9 @@ class SupportTicket(models.Model):
 
 class SupportTicketItem(models.Model):
     support_ticket = models.ForeignKey('SupportTicket', on_delete=models.CASCADE,
-                                       related_name='support_ticket_items')
-    material_order = models.ForeignKey('material.UsageOrder', on_delete=models.CASCADE)
+                                       related_name='support_ticket_items', verbose_name="Ремонтные работы")
+    material_order = models.ForeignKey('material.UsageOrder', on_delete=models.CASCADE,
+                                       verbose_name="Ордер на материалы")
 
     class Meta:
         verbose_name = 'Ордер на материалы'
@@ -142,10 +137,10 @@ class SupportTicketItem(models.Model):
 
 
 class SupportReport(models.Model):
-    support_ticket = models.ForeignKey('SupportTicket', on_delete=models.CASCADE)
-    time_created = models.DateTimeField(auto_now_add=True)
-    creator = models.ForeignKey('main.User', on_delete=models.CASCADE)
-    description = models.TextField()
+    support_ticket = models.ForeignKey('SupportTicket', on_delete=models.CASCADE, verbose_name="Ремонтные работы")
+    time_created = models.DateTimeField(auto_now_add=True, verbose_name="Время создания")
+    creator = models.ForeignKey('main.User', on_delete=models.CASCADE, verbose_name="Ответственный")
+    description = models.TextField(verbose_name="Описание")
 
     class Meta:
         verbose_name = 'Отчет по ремонту'

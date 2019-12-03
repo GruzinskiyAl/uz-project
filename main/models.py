@@ -15,10 +15,14 @@ class User(AbstractUser):
         (DAY_OFF, 'Выходной'),
         (REMOTE, 'Удаленно')
     )
-    user_status = models.SmallIntegerField(choices=USER_STATUS, null=True, blank=True)
-    role = models.ForeignKey('Role', on_delete=models.CASCADE, null=True, blank=True)
-    phone = models.CharField(max_length=15, blank=True, null=True)
-    manager = models.ForeignKey('User', on_delete=models.CASCADE, null=True, blank=True)
+    first_name = models.CharField(max_length=256, verbose_name='Имя')
+    last_name = models.CharField(max_length=256, verbose_name='Фамилия')
+    email = models.EmailField(verbose_name='Почта')
+    user_status = models.SmallIntegerField(choices=USER_STATUS, null=True, blank=True, verbose_name='Статус')
+    departament = models.ForeignKey('Departament', models.CASCADE, null=True, blank=True, verbose_name='Департамент')
+    role = models.ForeignKey('Role', on_delete=models.CASCADE, null=True, blank=True, verbose_name="Должность")
+    phone = models.CharField(max_length=15, blank=True, null=True, verbose_name="Телефон")
+    manager = models.ForeignKey('User', on_delete=models.CASCADE, null=True, blank=True, verbose_name="Руководитель")
 
     class Meta:
         verbose_name = 'Сотрудник'
@@ -36,11 +40,22 @@ class User(AbstractUser):
 
 
 class Role(models.Model):
-    name = models.CharField(max_length=512)
+    name = models.CharField(max_length=512, verbose_name="Название")
 
     class Meta:
         verbose_name = 'Должность'
         verbose_name_plural = 'Должности'
+
+    def __str__(self):
+        return self.name
+
+
+class Departament(models.Model):
+    name = models.CharField(max_length=512, verbose_name="Название")
+
+    class Meta:
+        verbose_name = 'Департамент'
+        verbose_name_plural = 'Департаменты'
 
     def __str__(self):
         return self.name

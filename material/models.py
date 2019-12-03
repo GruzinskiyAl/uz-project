@@ -5,7 +5,7 @@ from django.contrib.postgres.fields import JSONField
 
 
 class MaterialCategory(models.Model):
-    name = models.CharField(max_length=256)
+    name = models.CharField(max_length=256, verbose_name="Название")
 
     class Meta:
         verbose_name = 'Категория'
@@ -16,11 +16,11 @@ class MaterialCategory(models.Model):
 
 
 class Material(models.Model):
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
-    category = models.ForeignKey('MaterialCategory', on_delete=models.CASCADE)
-    name = models.CharField(max_length=512)
-    price = models.FloatField(default=0.0)
-    info = JSONField(null=True, blank=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, verbose_name="Код")
+    category = models.ForeignKey('MaterialCategory', on_delete=models.CASCADE, verbose_name="Категория")
+    name = models.CharField(max_length=512, verbose_name="Наименовние")
+    price = models.FloatField(default=0.0, verbose_name="Закупочная себестоимость")
+    info = JSONField(null=True, blank=True, verbose_name="Дополнительные характеристики")
 
     class Meta:
         verbose_name = 'Материал'
@@ -46,23 +46,27 @@ class Material(models.Model):
 
 
 class SupplyOrder(models.Model):
-    material = models.ForeignKey('Material', on_delete=models.CASCADE, related_name='supply_orders')
-    count_in = models.FloatField(default=0.0)
-    date = models.DateTimeField(auto_now_add=True)
-    responsive_user = models.ForeignKey('main.User', on_delete=models.CASCADE)
+    material = models.ForeignKey('Material', on_delete=models.CASCADE, related_name='supply_orders',
+                                 verbose_name="Материал")
+    count_in = models.FloatField(default=0.0, verbose_name="Количество")
+    date = models.DateTimeField(auto_now_add=True, verbose_name="Время поступления")
+    responsive_user = models.ForeignKey('main.User', on_delete=models.CASCADE, verbose_name="Ответственный")
 
     class Meta:
-        verbose_name = 'Закупка'
-        verbose_name_plural = 'Закупки'
+        verbose_name = 'Заявка на снабжение'
+        verbose_name_plural = 'Заявки на снабжение'
+
+    def __repr__(self):
+        return self.material.name
 
     def __str__(self):
-        return self.material
+        return self.__repr__
 
 
 class UsageOrder(models.Model):
-    material = models.ForeignKey('Material', on_delete=models.CASCADE)
-    count_out = models.FloatField(default=0.0)
-    date = models.DateTimeField(auto_now_add=True)
+    material = models.ForeignKey('Material', on_delete=models.CASCADE, verbose_name="Материал")
+    count_out = models.FloatField(default=0.0, verbose_name="Количество")
+    date = models.DateTimeField(auto_now_add=True, verbose_name="Время выдачи")
 
     class Meta:
         verbose_name = 'Выдача'

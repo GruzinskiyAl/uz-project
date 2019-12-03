@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     'rangefilter',
 
     'assets.apps.AssetsConfig',
-    'finance.apps.FinanceConfig',
     'main.apps.MainConfig',
     'material.apps.MaterialConfig'
 ]

@@ -11,4 +11,5 @@ class CustomChangeForm(UserChangeForm):
                   'phone',
                   'email',
                   'manager',
-                  'user_status')
+                  'user_status',
+                  'departament')

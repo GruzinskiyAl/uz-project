@@ -62,6 +62,15 @@ class MaterialAdmin(admin.ModelAdmin):
     search_fields = ('name', 'uuid')
     actions = (export_excel, )
 
+    def count(self, obj):
+        return obj.count
+
+    def sum_price(self, obj):
+        return obj.sum_price
+
+    count.short_description = 'Количество'
+    sum_price.short_description = 'Общая себестоимость'
+
 
 @admin.register(SupplyOrder)
 class SupplyOrderAdmin(admin.ModelAdmin):
